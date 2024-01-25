@@ -25,12 +25,11 @@ hadoop fs -test -e "$csv_output"
 # Verify that the csv file is existing if not create it
 if [ $? -ne 0 ]; then
     # Créer le fichier s'il n'existe pas sur HDFS
-    echo "server_location;IP;latency;Jitter;100kB_speed;1MB_speed;10MB_speed;25MB_speed;100MB_speed;Download_speed;upload_speed;network;date;hour;city;postal;localisation;org;signal_strength" > $csv_output
+    echo "server_location;IP;latency;Jitter;100kB_speed;1MB_speed;10MB_speed;25MB_speed;100MB_speed;Download_speed;upload_speed;network;date;hour;city;postal;localisation;org;signal_strength;network_interface" > $csv_output
     echo "Le fichier $csv_output a été créé avec succès sur HDFS."
 else
     echo "Le fichier $csv_output existe déjà sur HDFS."
 fi
-
 
 # update the csv file in hadoop
 
@@ -52,6 +51,7 @@ localisation=$(curl ipinfo.io | grep loc | cut -d: -f2 | sed 's/\"//g' | sed 's/
 org=$(curl ipinfo.io | grep org | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
 
 
+
 echo $speed_test
 
 # compute the wi fi forces
@@ -65,7 +65,30 @@ wifi_details=$($airport -I)
 signal_strength=$(echo "$wifi_details" | awk -F: '/ agrCtlRSSI: / {print $2}')
 
 
-echo "$speed_test;$network_name;$date;$heure;$city;$postal;$localisation;$org;$signal_strength" >> $csv_output
+
+# definie if the network pass by wi-fi or ethernet 
+
+# Obtenez l'interface réseau utilisée comme passerelle par défaut\n
+
+default_interface=$(route -n get default | grep 'interface:' | awk '{print $2}')
+# Vérifiez si l'interface est de type Wi-Fi ou Ethernet
+if [[ $(ifconfig $default_interface | grep -i "inet " ) ]]; then
+    if [[ $(networksetup -listallhardwareports | grep -B 1 -i "$default_interface" | awk '/Hardware Port/{ print }'|cut -d " " -f3-) == "Wi-Fi" ]]; then
+           echo "Connecté via Wi-Fi"
+            network_interface="wI-fI"
+               else
+                       echo "Connecté via Ethernet"
+                       network_interface="ethernet"
+                           fi
+                           else
+                              echo "Pas de connexion réseau"
+                              fi
+
+
+
+
+
+echo "$speed_test;$network_name;$date;$heure;$city;$postal;$localisation;$org;$signal_strength;$network_interface" >> $csv_output
 
 
 # tail -c1 fichier.csv | read -r _ || echo >> $fichier
