@@ -1,39 +1,3 @@
-#!/bin/bash
-
-csv_output="output/output_speedtest.csv"
-hdfs_directory="output"
-
-
-
-# Verify that the hadoop cluster is existing if not create it
-
-
-
-hadoop fs -test -e "$hdfs_directory"
-
-if [ $? -ne 0 ]; then
-    # Créer le répertoire s'il n'existe pas sur HDFS
-    hadoop fs -mkdir -p "$hdfs_directory"
-    echo "Le répertoire $hdfs_directory a été créé avec succès sur HDFS."
-else
-    echo "Le répertoire $hdfs_directory existe déjà sur HDFS."
-fi
-
-
-hadoop fs -test -e "$csv_output"
-
-# Verify that the csv file is existing if not create it
-if [ $? -ne 0 ]; then
-    # Créer le fichier s'il n'existe pas sur HDFS
-    echo "server_location;IP;latency;Jitter;100kB_speed;1MB_speed;10MB_speed;25MB_speed;100MB_speed;Download_speed;upload_speed;network;date;hour;city;postal;localisation;org;signal_strength;network_interface" > $csv_output
-    echo "Le fichier $csv_output a été créé avec succès sur HDFS."
-else
-    echo "Le fichier $csv_output existe déjà sur HDFS."
-fi
-
-# update the csv file in hadoop
-
-
 network_name=$(networksetup -getairportnetwork en1 | cut -d ":" -f2 | sed -e 's/^ *//g' -e 's/ *$//g')
 
 date=$(date +"%d/%m/%Y")
@@ -89,8 +53,4 @@ if [[ $(ifconfig $default_interface | grep -i "inet " ) ]]; then
 
 
 echo "$speed_test;$network_name;$date;$heure;$city;$postal;$localisation;$org;$signal_strength;$network_interface" >> $csv_output
-
-
-# tail -c1 fichier.csv | read -r _ || echo >> $fichier
-
 
