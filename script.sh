@@ -66,13 +66,6 @@ fi
 speed_test=$(npx speed-cloudflare-cli | cut -d ":" -f2 | tr '\n' ';' | sed 's/..$//' | sed 's/\x1b\[[0-9;]*m//g')
 
 
-# perform the curl of ipinfo.io
-
-ip_info=$(curl ipinfo.io)
-
-
-
-
 # define the values form the speedtest running
 
 server_location=$(echo $speed_test | cut -d ";" -f1)
@@ -99,26 +92,18 @@ heure=$(date +"%T")
 
 network_name=$(networksetup -getairportnetwork en1 | cut -d ":" -f2 | sed -e 's/^ *//g' -e 's/ *$//g')
 
-speed_test=$(npx speed-cloudflare-cli | cut -d ":" -f2 | tr '\n' ';' | sed 's/..$//' | sed 's/\x1b\[[0-9;]*m//g')
 
-city=$(ip_info | grep city | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
-
-postal=$(ip_info| grep postal | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
-
-localisation=$(ip_info| grep loc | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
-
-org=$(ip_info| grep org | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
+city=$(curl ipinfo.io | grep city | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
+postal=$(curl ipinfo.io| grep postal | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
+localisation=$(curl ipinfo.io| grep loc | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
+org=$(curl ipinfo.io| grep org | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
 
 # compute the wi fi forces
-
 airport="/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-
 # Obtenez les détails du réseau Wi-Fi
 wifi_details=$($airport -I)
-
 # Extraire la force du signal RSSI
 signal_strength=$(echo "$wifi_details" | awk -F: '/ agrCtlRSSI: / {print $2}')
-
 
 
 # definie if the network pass by wi-fi or ethernet 
@@ -143,47 +128,113 @@ if [[ $(ifconfig $default_interface | grep -i "inet " ) ]]; then
 
 
 
+# delete some ASCII character from the upload_speed variable
+
+upload_speed_substr=${upload_speed%%s*}
+upload_speed_substr+="s"
+
 
 # Upload in postegresql 
 
 ## verify that the test database is created
 
-if ! psql -lqt | cut -d \| -f 1 | grep -qw test
+
+username=$(whoami)
+
+if ! psql -U "$username" -lqt | cut -d \| -f 1 | grep speed_test
 then
     echo "Database test does not exist"
-    psql -c "CREATE DATABASE test"
+    createdb -U "$username" speed_test
+else
+    echo "Database speed_test already exist" 
 fi
 
 ## verify that the speedtest table is created
 
-if ! psql -lqt | cut -d \| -f 1 | grep -qw speedtest
+
+if ! psql -U "$username" -d speed_test -c "\dt" | grep speedtest_upload
 then
     echo "Table speedtest does not exist"
-    psql -d test -c "CREATE TABLE speedtest (speed_test VARCHAR(255), network_name VARCHAR(255), date VARCHAR(255), heure VARCHAR(255), city VARCHAR(255), postal VARCHAR(255), localisation VARCHAR(255), org VARCHAR(255), signal_strength VARCHAR(255), network_interface VARCHAR(255))"
+    psql -U "$username" -d speed_test -c "CREATE TABLE speedtest_upload (
+        server_location TEXT,
+        IP TEXT,
+        latency TEXT,
+        Jitter TEXT,
+        speed_100kB TEXT,
+        speed_1MB TEXT,
+        speed_10MB TEXT,
+        speed_25MB TEXT,
+        speed_100MB TEXT,
+        Download_speed TEXT,
+        upload_speed TEXT,
+        network TEXT,
+        date DATE,
+        hour TIME,
+        city TEXT,
+        postal INT,
+        localisation TEXT,
+        org TEXT,
+        signal_strength INT,
+        network_interface TEXT
+    );"
+else
+    echo "Table speedtest_upload already exist"
 fi
 
 
-## insert the values in the table
+# Insert the values in the table
+# Insert the values in the table
+# Insert the values in the table
+psql -U "$username" -d speed_test -c "
+SET DateStyle = 'European';
+INSERT INTO speedtest_upload (
+    server_location,
+    IP,
+    latency,
+    Jitter,
+    speed_100kB,
+    speed_1MB,
+    speed_10MB,
+    speed_25MB,
+    speed_100MB,
+    Download_speed,
+    upload_speed,
+    network,
+    date,
+    hour,
+    city,
+    postal,
+    localisation,
+    org,
+    signal_strength,
+    network_interface
+) VALUES (
+    '$server_location',
+    '$IP',
+    '$latency',
+    '$Jitter',
+    '$speed_100kB',
+    '$speed_1MB',
+    '$speed_10MB',
+    '$speed_25MB',
+    '$speed_100MB',
+    '$Download_speed',
+    '$upload_speed_substr',
+    '$network_name',
+    '$date',
+    '$heure',
+    '$city',
+    '$postal',
+    '$localisation',
+    '$org',
+    '$signal_strength',
+    '$network_interface'
+);"
 
-CREATE TABLE speedtest (
-    server_location TEXT,
-    IP TEXT,
-    latency FLOAT,
-    Jitter FLOAT,
-    speed_100kB FLOAT,
-    speed_1MB FLOAT,
-    speed_10MB FLOAT,
-    speed_25MB FLOAT,
-    speed_100MB FLOAT,
-    Download_speed FLOAT,
-    upload_speed FLOAT,
-    network TEXT,
-    date DATE,
-    hour TIME,
-    city TEXT,
-    postal INT,
-    localisation TEXT,
-    org TEXT,
-    signal_strength INT,
-    network_interface TEXT
-);
+# print the table
+psql -U "$username" -d speed_test -c "
+SET DateStyle = 'European';
+SELECT * FROM speedtest_upload;"
+
+
+
