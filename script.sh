@@ -21,7 +21,7 @@ then
 fi
 
 
-## Check if metabse is installed else installed it
+## Check if metabase is installed else installed it
 
 if ! command -v metabase &> /dev/null
 then
@@ -29,6 +29,36 @@ then
     brew install metabase
     exit
 fi
+
+# Check if node.js is installed else installed it
+if ! command -v node &> /dev/null; then
+    echo "Node.js is installed"
+    brew install node
+else
+    echo "Node.js already installed"
+fi
+
+
+
+
+## Verify that the service is activated
+
+## verify for postegre
+if ! brew services list | grep -q 'postgresql.*started'; then
+    echo "starting PostgreSQL..."
+    brew services start postgresql
+else
+    echo "Poostegre is already started"
+fi
+
+## verify for metabase
+if ! brew services list | grep -q 'metabase.*started'; then
+    echo "starting Metabase..."
+    brew services start metabase
+else
+    echo "Metabase is already started"
+fi
+
 
 # Perform the speedtest 
 
@@ -110,10 +140,6 @@ if [[ $(ifconfig $default_interface | grep -i "inet " ) ]]; then
                               fi
 
 
-
-
-
-echo "$speed_test;$network_name;$date;$heure;$city;$postal;$localisation;$org;$signal_strength;$network_interface" >> $csv_output
 
 
 
