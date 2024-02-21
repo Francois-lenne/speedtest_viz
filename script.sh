@@ -43,19 +43,31 @@ ip_info=$(curl ipinfo.io)
 
 
 
-# defint the values form the speedtest running
+# define the values form the speedtest running
+
+server_location=$(echo $speed_test | cut -d ";" -f1)
+IP=$(echo $speed_test | cut -d ";" -f2)
+latency=$(echo $speed_test | cut -d ";" -f3)
+Jitter=$(echo $speed_test | cut -d ";" -f4)
+speed_100kB=$(echo $speed_test | cut -d ";" -f5)
+speed_1MB=$(echo $speed_test | cut -d ";" -f6)
+speed_10MB=$(echo $speed_test | cut -d ";" -f7)
+speed_25MB=$(echo $speed_test | cut -d ";" -f8)
+speed_100MB=$(echo $speed_test | cut -d ";" -f9)
+Download_speed=$(echo $speed_test | cut -d ";" -f10)
+upload_speed=$(echo $speed_test | cut -d ";" -f11)
 
 
 
-
-
-# define the values from curl ipinfo.io in order to insert them in the postegre sql database
-
-network_name=$(networksetup -getairportnetwork en1 | cut -d ":" -f2 | sed -e 's/^ *//g' -e 's/ *$//g')
+# define the variable time 
 
 date=$(date +"%d/%m/%Y")
 
 heure=$(date +"%T")
+
+# define the values from curl ipinfo.io in order to insert them in the postegre sql database
+
+network_name=$(networksetup -getairportnetwork en1 | cut -d ":" -f2 | sed -e 's/^ *//g' -e 's/ *$//g')
 
 speed_test=$(npx speed-cloudflare-cli | cut -d ":" -f2 | tr '\n' ';' | sed 's/..$//' | sed 's/\x1b\[[0-9;]*m//g')
 
@@ -66,10 +78,6 @@ postal=$(ip_info| grep postal | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
 localisation=$(ip_info| grep loc | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
 
 org=$(ip_info| grep org | cut -d: -f2 | sed 's/\"//g' | sed 's/,//g')
-
-
-
-echo $speed_test
 
 # compute the wi fi forces
 
@@ -131,3 +139,25 @@ fi
 
 ## insert the values in the table
 
+CREATE TABLE speedtest (
+    server_location TEXT,
+    IP TEXT,
+    latency FLOAT,
+    Jitter FLOAT,
+    speed_100kB FLOAT,
+    speed_1MB FLOAT,
+    speed_10MB FLOAT,
+    speed_25MB FLOAT,
+    speed_100MB FLOAT,
+    Download_speed FLOAT,
+    upload_speed FLOAT,
+    network TEXT,
+    date DATE,
+    hour TIME,
+    city TEXT,
+    postal INT,
+    localisation TEXT,
+    org TEXT,
+    signal_strength INT,
+    network_interface TEXT
+);
