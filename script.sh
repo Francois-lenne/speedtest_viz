@@ -134,6 +134,104 @@ upload_speed_substr=${upload_speed%%s*}
 upload_speed_substr+="s"
 
 
+# transform the data 
+
+
+## Conversion for the latency and Jitter in milliseconds 
+convertir_en_ms() {
+  valeur=$1
+
+  # Extraire l'unité de temps et la valeur numérique
+  unit=$(echo $valeur | awk '{print $2}')
+  num=$(echo $valeur | awk '{print $1}')
+
+  # Convertir la valeur en millisecondes
+  case $unit in
+    "s")
+      # Convertir de secondes en millisecondes
+      num=$(echo "$num * 1000" | bc -l)
+      ;;
+    "ms")
+      # Pas besoin de conversion
+      ;;
+    "µs")
+      # Convertir de microsecondes en millisecondes
+      num=$(echo "$num / 1000" | bc -l)
+      ;;
+    "ns")
+      # Convertir de nanosecondes en millisecondes
+      num=$(echo "$num / 1000000" | bc -l)
+      ;;
+    *)
+      # Si l'unité n'est pas reconnue, retourner 0
+      num=0
+      ;;
+  esac
+
+  # Retourner la valeur convertie avec deux décimales
+  echo $num | LC_ALL=C awk '{printf "%.2f\n", $0}'
+}
+
+# applied the function to the latency and Jitter variable
+latency=$(convertir_en_ms "$latency")
+Jitter=$(convertir_en_ms "$Jitter")
+
+
+
+
+
+
+
+
+# apply the fonction convertir_en_mbps to the speed variables
+
+convertir_en_mbps() {
+  valeur=$1
+
+  # Extraire l'unité de bande passante et la valeur numérique
+  unit=$(echo $valeur | awk '{print $2}')
+  num=$(echo $valeur | awk '{print $1}')
+
+  # Convertir la valeur en mégabits par seconde
+  case $unit in
+    "Gbps")
+      # Convertir de gigabits par seconde en mégabits par seconde
+      num=$(echo "$num * 1000" | bc -l)
+      ;;
+    "Mbps")
+      # Pas besoin de conversion
+      ;;
+    "Kbps")
+      # Convertir de kilobits par seconde en mégabits par seconde
+      num=$(echo "$num / 1000" | bc -l)
+      ;;
+    "bps")
+      # Convertir de bits par seconde en mégabits par seconde
+      num=$(echo "$num / 1000000" | bc -l)
+      ;;
+    *)
+      # Si l'unité n'est pas reconnue, retourner 0
+      num=0
+      ;;
+  esac
+
+  # Retourner la valeur convertie avec deux décimales
+  echo $num | LC_ALL=C awk '{printf "%.2f\n", $0}'
+}
+
+
+## apply the function 
+
+speed_100kB=$(convertir_en_mbps "$speed_100kB")
+speed_1MB=$(convertir_en_mbps "$speed_1MB")
+speed_10MB=$(convertir_en_mbps "$speed_10MB")
+speed_25MB=$(convertir_en_mbps "$speed_25MB")
+speed_100MB=$(convertir_en_mbps "$speed_100MB")
+Download_speed=$(convertir_en_mbps "$Download_speed")
+upload_speed_substr=$(convertir_en_mbps "$upload_speed_substr")
+
+
+
 # Upload in postegresql 
 
 ## verify that the test database is created
@@ -158,15 +256,15 @@ then
     psql -U "$username" -d speed_test -c "CREATE TABLE speedtest_upload (
         server_location TEXT,
         IP TEXT,
-        latency TEXT,
-        Jitter TEXT,
-        speed_100kB TEXT,
-        speed_1MB TEXT,
-        speed_10MB TEXT,
-        speed_25MB TEXT,
-        speed_100MB TEXT,
-        Download_speed TEXT,
-        upload_speed TEXT,
+        latency NUMERIC(7, 2),
+        Jitter NUMERIC(7, 2),
+        speed_100kB NUMERIC(7, 2),
+        speed_1MB NUMERIC(7, 2),
+        speed_10MB NUMERIC(7, 2),
+        speed_25MB NUMERIC(7, 2),
+        speed_100MB NUMERIC(7, 2),
+        Download_speed NUMERIC(7, 2),
+        upload_speed NUMERIC(7, 2),
         network TEXT,
         date DATE,
         hour TIME,
@@ -182,8 +280,6 @@ else
 fi
 
 
-# Insert the values in the table
-# Insert the values in the table
 # Insert the values in the table
 psql -U "$username" -d speed_test -c "
 SET DateStyle = 'European';
