@@ -552,3 +552,79 @@ else
 fi
 
 net_id=$(echo $net_id | xargs)
+
+
+
+
+
+
+
+# the end the set up of the test table 
+
+
+psql -U "$username" -d speed_test -c "
+CREATE TABLE IF NOT EXISTS test (
+    test_id SERIAL PRIMARY KEY,
+    latency NUMERIC(7, 2),
+    Jitter NUMERIC(7, 2),
+    speed_100kB NUMERIC(7, 2),
+    speed_1MB NUMERIC(7, 2),
+    speed_10MB NUMERIC(7, 2),
+    speed_25MB NUMERIC(7, 2),
+    speed_100MB NUMERIC(7, 2),
+    Download_speed NUMERIC(7, 2),
+    upload_speed NUMERIC(7, 2),
+    datetime TIMESTAMP,
+    server_id INTEGER,
+    isp_id INTEGER,
+    network_id INTEGER,
+    loc_id INTEGER,
+    FOREIGN KEY (server_id) REFERENCES cloudflare_server(id_server),
+    FOREIGN KEY (isp_id) REFERENCES isp(id_isp),
+    FOREIGN KEY (network_id) REFERENCES network(network_id),
+    FOREIGN KEY (loc_id) REFERENCES localisation(id_loc),
+    signal_strength INT,
+    netwotk_interface TEXT
+);"
+
+
+
+# insert ino the test table 
+
+
+psql -U "$username" -d speed_test -c "
+INSERT INTO test (
+    latency,
+    Jitter,
+    speed_100kB,
+    speed_1MB,
+    speed_10MB,
+    speed_25MB,
+    speed_100MB,
+    Download_speed,
+    upload_speed,
+    datetime,
+    server_id,
+    isp_id,
+    network_id,
+    loc_id,
+    signal_strength,
+    netwotk_interface
+) VALUES (
+    '$latency',
+    '$Jitter',
+    '$speed_100kB',
+    '$speed_1MB',
+    '$speed_10MB',
+    '$speed_25MB',
+    '$speed_100MB',
+    '$Download_speed',
+    '$upload_speed_substr',
+    '$current_datetime',
+    '$server_id',
+    '$isp_id',
+    '$net_id',
+    '$loc_id',
+    '$signal_strength',
+    '$network_interface'
+);"
