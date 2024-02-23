@@ -84,9 +84,7 @@ upload_speed=$(echo $speed_test | cut -d ";" -f11)
 
 # define the variable time 
 
-date=$(date +"%d/%m/%Y")
-
-heure=$(date +"%T")
+current_datetime=$(date '+%F %T')
 
 # define the values from curl ipinfo.io in order to insert them in the postegre sql database
 
@@ -266,7 +264,7 @@ then
         Download_speed NUMERIC(7, 2),
         upload_speed NUMERIC(7, 2),
         network TEXT,
-        date DATE,
+        datetime TIMESTAMP,
         hour TIME,
         city TEXT,
         postal INT,
@@ -296,8 +294,7 @@ INSERT INTO speedtest_upload (
     Download_speed,
     upload_speed,
     network,
-    date,
-    hour,
+    datetime,
     city,
     postal,
     localisation,
@@ -317,8 +314,7 @@ INSERT INTO speedtest_upload (
     '$Download_speed',
     '$upload_speed_substr',
     '$network_name',
-    '$date',
-    '$heure',
+    '$current_datetime',
     '$city',
     '$postal',
     '$localisation',
@@ -327,13 +323,9 @@ INSERT INTO speedtest_upload (
     '$network_interface'
 );"
 
-# print the table
-psql -U "$username" -d speed_test -c "
-SET DateStyle = 'European';
-SELECT * FROM speedtest_upload;"
 
-
-
+postal=$(echo $postal | xargs)
+echo "Postal code is $postal"
 
 
 # Creation of the tables 
@@ -341,7 +333,7 @@ SELECT * FROM speedtest_upload;"
 # Create the table for the clouflare server
 psql -U "$username" -d speed_test -c "
 CREATE TABLE IF NOT EXISTS cloudflare_server (
-    id SERIAL PRIMARY KEY,
+    id_server SERIAL PRIMARY KEY,
     server_name VARCHAR(255) NOT NULL UNIQUE
 );"
 
@@ -355,13 +347,13 @@ SELECT server_name FROM cloudflare_server WHERE server_name = '$server_location'
 # Supprimez les espaces blancs autour de server_name
 server_name=$(echo $server_name | xargs)
 
-echo "Server ID is $server_name"
+echo "Server name is $server_name"
 
 if [ ! -z "$server_name" ]
 then
     echo "Pas d'ajout"
     server_id=$(psql -U "$username" -d speed_test -t -c "
-  SELECT id FROM cloudflare_server WHERE server_name = '$server_location';
+  SELECT id_server FROM cloudflare_server WHERE server_name = '$server_location';
     ")
 else
     echo "Variable à ajouter : $server_location"
@@ -372,7 +364,7 @@ else
 
 
     server_id=$(psql -U "$username" -d speed_test -t -c "
-    SELECT id FROM cloudflare_server WHERE server_name = '$server_location';
+    SELECT id_server FROM cloudflare_server WHERE server_name = '$server_location';
     ") 
 fi
 
@@ -385,7 +377,7 @@ echo "Server ID is $server_id"
 # Create the table for the ISP
 psql -U "$username" -d speed_test -c "
 CREATE TABLE IF NOT EXISTS isp (
-    id SERIAL PRIMARY KEY,
+    id_isp SERIAL PRIMARY KEY,
     isp_name VARCHAR(255) NOT NULL UNIQUE
 );"
 
@@ -405,7 +397,7 @@ if [ ! -z "$isp_name" ]
 then
     echo "Pas d'ajout"
     isp_id=$(psql -U "$username" -d speed_test -t -c "
-  SELECT id FROM isp WHERE isp_name = '$org';
+  SELECT id_isp FROM isp WHERE isp_name = '$org';
     ")
 else
     echo "Variable à ajouter : $org"
@@ -416,7 +408,7 @@ else
 
 
     isp_id=$(psql -U "$username" -d speed_test -t -c "
-    SELECT id FROM isp WHERE isp_name = '$org';
+    SELECT id_isp FROM isp WHERE isp_name = '$org';
     ") 
 fi
 
@@ -476,7 +468,7 @@ echo "IP ID is $ip_id"
 
 
 psql -U "$username" -d speed_test -c "
-CREATE TABLE localisation (
+CREATE TABLE IF NOT EXISTS localisation (
     id_loc SERIAL PRIMARY KEY,
     city VARCHAR(255),
     postal_code NUMERIC(10, 0),
@@ -500,13 +492,13 @@ if [ ! -z "$loc" ]
 then
     echo "Pas d'ajout"
     loc_id=$(psql -U "$username" -d speed_test -t -c "
-  SELECT id_loc FROM localisation WHERE coordinates = '$loc';
+  SELECT id_loc FROM localisation WHERE coordinates = '$localisation';
     ")
 else
-    echo "Variable à ajouter : $city, $postal_code, $localisation, $ip_id"
+    echo "Variable à ajouter : $city, $postal, $localisation, $ip_id"
     psql -U "$username" -d speed_test -c "
     INSERT INTO localisation (city, postal_code, coordinates, ip_id) 
-    VALUES ('$city', '$postal_code', '$localisation', '$ip_id');
+    VALUES ('$city', '$postal', '$localisation', '$ip_id');
     "
     loc_id=$(psql -U "$username" -d speed_test -t -c "
     SELECT id_loc FROM localisation WHERE coordinates = '$localisation';
