@@ -336,3 +336,185 @@ SELECT * FROM speedtest_upload;"
 
 
 
+# Creation of the tables 
+
+# Create the table for the clouflare server
+psql -U "$username" -d speed_test -c "
+CREATE TABLE IF NOT EXISTS cloudflare_server (
+    id SERIAL PRIMARY KEY,
+    server_name VARCHAR(255) NOT NULL UNIQUE
+);"
+
+
+
+# Vérifiez si une ligne avec le server_name spécifié existe déjà
+server_name=$(psql -U "$username" -d speed_test -t -c "
+SELECT server_name FROM cloudflare_server WHERE server_name = '$server_location';
+")
+
+# Supprimez les espaces blancs autour de server_name
+server_name=$(echo $server_name | xargs)
+
+echo "Server ID is $server_name"
+
+if [ ! -z "$server_name" ]
+then
+    echo "Pas d'ajout"
+    server_id=$(psql -U "$username" -d speed_test -t -c "
+  SELECT id FROM cloudflare_server WHERE server_name = '$server_location';
+    ")
+else
+    echo "Variable à ajouter : $server_location"
+    psql -U "$username" -d speed_test -c "
+    INSERT INTO cloudflare_server (server_name) 
+    VALUES ('$server_location');
+    "
+
+
+    server_id=$(psql -U "$username" -d speed_test -t -c "
+    SELECT id FROM cloudflare_server WHERE server_name = '$server_location';
+    ") 
+fi
+
+server_id=$(echo $server_id | xargs)
+
+echo "Server ID is $server_id"
+
+
+
+# Create the table for the ISP
+psql -U "$username" -d speed_test -c "
+CREATE TABLE IF NOT EXISTS isp (
+    id SERIAL PRIMARY KEY,
+    isp_name VARCHAR(255) NOT NULL UNIQUE
+);"
+
+
+
+# Vérifiez si une ligne avec le server_name spécifié existe déjà
+isp_name=$(psql -U "$username" -d speed_test -t -c "
+SELECT isp_name FROM isp WHERE isp_name = '$org';
+")
+
+# Supprimez les espaces blancs autour de server_name
+isp_name=$(echo $isp_name | xargs)
+
+echo "isp name is $isp_name"
+
+if [ ! -z "$isp_name" ]
+then
+    echo "Pas d'ajout"
+    isp_id=$(psql -U "$username" -d speed_test -t -c "
+  SELECT id FROM isp WHERE isp_name = '$org';
+    ")
+else
+    echo "Variable à ajouter : $org"
+    psql -U "$username" -d speed_test -c "
+    INSERT INTO isp (isp_name) 
+    VALUES ('$org');
+    "
+
+
+    isp_id=$(psql -U "$username" -d speed_test -t -c "
+    SELECT id FROM isp WHERE isp_name = '$org';
+    ") 
+fi
+
+isp_id=$(echo $isp_id | xargs)
+
+echo "ISP ID is $isp_id"
+
+
+
+
+
+
+
+
+
+# Create the table for the IP
+psql -U "$username" -d speed_test -c "
+CREATE TABLE IF NOT EXISTS ip (
+    ip_id SERIAL PRIMARY KEY,
+    ip_adress VARCHAR(255) NOT NULL UNIQUE
+);"
+
+
+
+# Vérifiez si une ligne avec le server_name spécifié existe déjà
+ip_adress=$(psql -U "$username" -d speed_test -t -c "
+SELECT ip_adress FROM ip WHERE ip_adress = '$IP';
+")
+
+# Supprimez les espaces blancs autour de server_name
+ip_adress=$(echo $ip_adress | xargs)
+
+echo "IP adress is $isp_name"
+
+if [ ! -z "$ip_adress" ]
+then
+    echo "Pas d'ajout"
+    ip_id=$(psql -U "$username" -d speed_test -t -c "
+  SELECT ip_id FROM ip WHERE ip_adress = '$IP';
+    ")
+else
+    echo "Variable à ajouter : $IP"
+    psql -U "$username" -d speed_test -c "
+    INSERT INTO ip (ip_adress) 
+    VALUES ('$IP');
+    "
+
+
+    ip_id=$(psql -U "$username" -d speed_test -t -c "
+    SELECT ip_id FROM ip WHERE ip_adress = '$IP';
+    ") 
+fi
+
+ip_id=$(echo $ip_id | xargs)
+
+echo "IP ID is $ip_id"
+
+
+psql -U "$username" -d speed_test -c "
+CREATE TABLE localisation (
+    id_loc SERIAL PRIMARY KEY,
+    city VARCHAR(255),
+    postal_code NUMERIC(10, 0),
+    coordinates VARCHAR(255),
+    ip_id INTEGER,
+    FOREIGN KEY (ip_id) REFERENCES ip(ip_id)
+);
+"
+
+# Vérifiez si une ligne avec le server_name spécifié existe déjà
+loc=$(psql -U "$username" -d speed_test -t -c "
+SELECT coordinates FROM localisation WHERE coordinates = '$localisation';
+")
+
+# Supprimez les espaces blancs
+loc=$(echo $loc | xargs)
+
+echo "localisation is $loc"
+
+if [ ! -z "$loc" ]
+then
+    echo "Pas d'ajout"
+    loc_id=$(psql -U "$username" -d speed_test -t -c "
+  SELECT id_loc FROM localisation WHERE coordinates = '$loc';
+    ")
+else
+    echo "Variable à ajouter : $city, $postal_code, $localisation, $ip_id"
+    psql -U "$username" -d speed_test -c "
+    INSERT INTO localisation (city, postal_code, coordinates, ip_id) 
+    VALUES ('$city', '$postal_code', '$localisation', '$ip_id');
+    "
+    loc_id=$(psql -U "$username" -d speed_test -t -c "
+    SELECT id_loc FROM localisation WHERE coordinates = '$localisation';
+    ") 
+fi
+
+loc_id=$(echo $loc_id | xargs)
+
+echo "loc ID is $loc_id"
+
+
