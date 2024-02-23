@@ -510,3 +510,45 @@ loc_id=$(echo $loc_id | xargs)
 echo "loc ID is $loc_id"
 
 
+
+
+
+# Create the table for the network
+psql -U "$username" -d speed_test -c "
+CREATE TABLE IF NOT EXISTS network (
+    network_id SERIAL PRIMARY KEY,
+    network_name VARCHAR(255) NOT NULL UNIQUE
+);"
+
+
+
+# Vérifiez si une ligne avec le server_name spécifié existe déjà
+net=$(psql -U "$username" -d speed_test -t -c "
+SELECT network_name FROM network WHERE network_name = '$network_name';
+")
+
+# Supprimez les espaces blancs autour de server_name
+net=$(echo $net | xargs)
+
+echo "network name is $net"
+
+if [ ! -z "$net" ]
+then
+    echo "Pas d'ajout"
+    net_id=$(psql -U "$username" -d speed_test -t -c "
+  SELECT network_id FROM network WHERE network_name = '$network_name';
+    ")
+else
+    echo "Variable à ajouter : $network_name"
+    psql -U "$username" -d speed_test -c "
+    INSERT INTO network (network_name)
+    VALUES ('$network_name');
+    "
+
+
+    net_id=$(psql -U "$username" -d speed_test -t -c "
+    SELECT network_id FROM network WHERE network_name = '$network_name';
+    ") 
+fi
+
+net_id=$(echo $net_id | xargs)
