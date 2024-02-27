@@ -3,6 +3,8 @@
 
 This project 
 
+https://github.com/KNawm/speed-cloudflare-cli
+
 
 # The stack of this project 
 
@@ -22,5 +24,17 @@ I choose to write this project in bash using postegreSQL with Homebrew in order 
 First, you need to open your terminal and enter this commands
 
 ```
-git clone 
+git clone https://github.com/Francois-lenne/speedtest_viz/tree/master
 ```
+
+Make the script executable in order to implement the architecture 
+
+```
+chmod +x myscript.sh
+```
+
+then you can run this script automaticly with cron 
+
+
+
+
