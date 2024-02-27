@@ -12,7 +12,7 @@ I choose to write this project in bash using postegreSQL with Homebrew in order 
 
 ## The Project Stack
 
-[![My Skills](https://skills.thijs.gg/icons?i=bash,apple)](https://skills.thijs.gg)
+[![My Skills](https://skills.thijs.gg/icons?i=bash,apple,postgres)](https://skills.thijs.gg)
 
 
 
