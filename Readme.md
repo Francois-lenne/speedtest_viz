@@ -1,7 +1,7 @@
 # What is the purpuse of this project 
 
 
-This project 
+the genesis of this project come from this youtube video (https://www.youtube.com/watch?v=yxnKeTL2I6E) where a tech journalist explain how speed test working and at the same time i have some wi-fi problem. So i use my program and data knowledge in order to track the speed quality of the network where i'am connected. I choose the speedtest from cloudflare for this project and ipinfo.io in order to retreive some information about the network (localisation ...)
 
 https://github.com/KNawm/speed-cloudflare-cli
 
@@ -33,7 +33,7 @@ Make the script executable in order to implement the architecture
 chmod +x myscript.sh
 ```
 
-then you can run this script automaticly with cron 
+then you can run this script automaticly with cron if you want it
 
 
 
