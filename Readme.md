@@ -22,6 +22,7 @@ I choose to write this project in bash using postegreSQL with Homebrew in order 
 
 ## Conceptual Data Model (CDM)
 
+![MCD](https://github.com/Francois-lenne/speedtest_viz/assets/114836746/10cf7d89-02d7-4298-b0a1-6dbde0e7a881)
 
 
 
